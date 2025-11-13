@@ -23,7 +23,7 @@ function App() {
       <MainContent>
         <HeroSection>
           <HeroTitle>
-            당신의 축구 영상을 데이터로 바꿔주는 가장 쉬운 방법.
+            당신의 축구 영상을 데이터로 바꿔주는 가장 쉬운 방법
           </HeroTitle>
           <HeroSubtitle>
             Player tracking · Event detection · Tactical insights — All automated.
