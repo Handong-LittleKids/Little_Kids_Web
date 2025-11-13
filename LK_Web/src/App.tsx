@@ -109,30 +109,30 @@ const Header = styled.header`
 const Navbar = styled.nav`
   max-width: 1280px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 16px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 1rem;
+    gap: 16px;
   }
 `
 
 const Logo = styled.div`
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: 700;
   color: #7c3aed;
 `
 
 const NavLinks = styled.div`
   display: flex;
-  gap: 2rem;
+  gap: 32px;
 
   @media (max-width: 768px) {
-    gap: 1rem;
-    font-size: 0.9rem;
+    gap: 16px;
+    font-size: 14px;
   }
 `
 
@@ -150,57 +150,57 @@ const NavLink = styled.a`
 const MainContent = styled.main`
   max-width: 1280px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 64px 32px;
 
   @media (max-width: 768px) {
-    padding: 2rem 1rem;
+    padding: 32px 16px;
   }
 `
 
 const HeroSection = styled.section`
   text-align: center;
-  margin-bottom: 4rem;
-  padding: 2rem 0;
+  margin-bottom: 64px;
+  padding: 32px 0;
 `
 
 const HeroTitle = styled.h1`
-  font-size: 2.7rem;
+  font-size: 43px;
   font-weight: 700;
   line-height: 1.2;
   color: #111827;
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
   max-width: 900px;
   margin-left: auto;
   margin-right: auto;
 
   @media (max-width: 768px) {
-    font-size: 2.5rem;
+    font-size: 40px;
   }
 `
 
 const HeroSubtitle = styled.p`
-  font-size: 1.25rem;
+  font-size: 20px;
   color: #6b7280;
-  margin-bottom: 2.5rem;
+  margin-bottom: 40px;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 
   @media (max-width: 768px) {
-    font-size: 1.1rem;
+    font-size: 18px;
   }
 `
 
 const CTAButtons = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
 `
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
-  padding: 0.875rem 2rem;
-  font-size: 1rem;
+  padding: 14px 32px;
+  font-size: 16px;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
@@ -220,12 +220,12 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
 `
 
 const ImageSection = styled.section`
-  margin-top: 4rem;
+  margin-top: 64px;
 `
 
 const ImageContainer = styled.div`
   width: 100%;
-  margin-bottom: 2rem;
+  margin-bottom: 32px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -246,7 +246,7 @@ const MainVideo = styled.video`
 
 const TabsContainer = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
 `
@@ -255,8 +255,8 @@ const Tab = styled.button<{ $active?: boolean }>`
   background-color: transparent;
   color: ${props => props.$active ? '#7c3aed' : '#6b7280'};
   border: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  padding: 12px 24px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid ${props => props.$active ? '#7c3aed' : 'transparent'};
