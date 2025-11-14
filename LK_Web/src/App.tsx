@@ -1,8 +1,13 @@
 import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import styled from 'styled-components'
+import { KakaoLoginButton } from './components/KakaoLoginButton'
+import { KakaoCallback } from './pages/KakaoCallback'
+import { useAuth } from './hooks/useAuth'
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState('Detection')
+  const { user, isAuthenticated, logout } = useAuth()
 
   const tabs = ['Detection', 'Tracking', 'Counting', 'Analysis']
 
@@ -17,6 +22,19 @@ function App() {
             <NavLink href="#pricing">Pricing</NavLink>
             <NavLink href="#about">About</NavLink>
           </NavLinks>
+          <AuthSection>
+            {isAuthenticated && user ? (
+              <UserInfo>
+                {user.profile_image && (
+                  <UserImage src={user.profile_image} alt={user.nickname || 'User'} />
+                )}
+                <UserName>{user.nickname || '사용자'}</UserName>
+                <LogoutButton onClick={logout}>로그아웃</LogoutButton>
+              </UserInfo>
+            ) : (
+              <KakaoLoginButton />
+            )}
+          </AuthSection>
         </Navbar>
       </Header>
 
@@ -90,6 +108,17 @@ function App() {
   )
 }
 
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AppContent />} />
+        <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
 export default App
 
 
@@ -133,6 +162,49 @@ const NavLinks = styled.div`
   @media (max-width: 768px) {
     gap: 16px;
     font-size: 14px;
+  }
+`
+
+const AuthSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`
+
+const UserImage = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+`
+
+const UserName = styled.span`
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+`
+
+const LogoutButton = styled.button`
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #374151;
+    border-color: #d1d5db;
+    background-color: #f9fafb;
   }
 `
 
