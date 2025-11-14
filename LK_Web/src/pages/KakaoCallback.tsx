@@ -27,11 +27,12 @@ export function KakaoCallback() {
             window.location.origin
           );
           window.close();
-        } catch (error) {
+        } catch (error: any) {
           console.error('로그인 실패:', error);
-          alert('로그인에 실패했습니다.');
+          const errorMessage = error?.message || '로그인에 실패했습니다.';
+          alert(errorMessage);
           window.opener?.postMessage(
-            { type: 'KAKAO_AUTH_ERROR', error: '로그인 실패' },
+            { type: 'KAKAO_AUTH_ERROR', error: errorMessage },
             window.location.origin
           );
           window.close();

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { UserInfo, getCurrentUser, logout as apiLogout, tokenStorage } from '../utils/api';
+import type { UserInfo } from '../types/api';
+import { getCurrentUser, logout as apiLogout, tokenStorage } from '../utils/api';
 
 export function useAuth() {
   const [user, setUser] = useState<UserInfo | null>(null);

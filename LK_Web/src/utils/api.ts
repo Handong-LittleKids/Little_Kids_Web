@@ -1,17 +1,6 @@
+import type { UserInfo, AuthResponse } from '../types/api';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-
-export interface UserInfo {
-  id: number;
-  nickname?: string;
-  profile_image?: string;
-  email?: string;
-}
-
-export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  user_info: UserInfo;
-}
 
 // 토큰 저장 및 관리
 export const tokenStorage = {
@@ -32,9 +21,9 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = tokenStorage.get();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   if (token) {
@@ -47,8 +36,15 @@ async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: '알 수 없는 오류가 발생했습니다' }));
-    throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+    let errorMessage = `HTTP error! status: ${response.status}`;
+    try {
+      const error = await response.json();
+      errorMessage = error.detail || error.message || error.error || errorMessage;
+    } catch {
+      errorMessage = `서버 오류 (${response.status})`;
+    }
+    console.error('API 오류:', errorMessage);
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -58,6 +54,9 @@ async function apiRequest<T>(
 export async function getKakaoLoginUrl(): Promise<{ login_url: string }> {
   return apiRequest<{ login_url: string }>('/api/auth/kakao/login-url');
 }
+
+// 타입 재export
+export type { UserInfo, AuthResponse } from '../types/api';
 
 // 카카오 인증 코드로 로그인
 export async function kakaoLogin(code: string): Promise<AuthResponse> {
