@@ -25,23 +25,33 @@ export function KakaoLoginButton() {
       );
 
       // 팝업에서 메시지 받기
+      let messageProcessed = false; // 중복 처리 방지
       const messageHandler = async (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
+        // 현재 origin과 일치하는지 확인 (포트가 달라질 수 있으므로 localhost만 확인)
+        const currentOrigin = window.location.origin;
+        if (!event.origin.startsWith('http://localhost:') && !event.origin.startsWith('https://localhost:')) {
+          return;
+        }
         
-        if (event.data.type === 'KAKAO_AUTH_CODE') {
-          try {
-            await kakaoLogin(event.data.code);
-            await refresh();
-            window.removeEventListener('message', messageHandler);
-            popup?.close();
-            setLoading(false);
-          } catch (error) {
-            console.error('로그인 실패:', error);
-            alert('로그인에 실패했습니다. 다시 시도해주세요.');
-            window.removeEventListener('message', messageHandler);
-            popup?.close();
-            setLoading(false);
-          }
+        // 이미 처리된 경우 중복 실행 방지
+        if (messageProcessed) {
+          console.log('이미 처리된 메시지입니다.');
+          return;
+        }
+        
+        if (event.data.type === 'KAKAO_AUTH_SUCCESS') {
+          // KakaoCallback에서 이미 로그인 처리가 완료됨
+          messageProcessed = true;
+          await refresh(); // 사용자 정보 새로고침
+          window.removeEventListener('message', messageHandler);
+          popup?.close();
+          setLoading(false);
+        } else if (event.data.type === 'KAKAO_AUTH_ERROR') {
+          // 에러 처리
+          messageProcessed = true;
+          window.removeEventListener('message', messageHandler);
+          popup?.close();
+          setLoading(false);
         }
       };
 
