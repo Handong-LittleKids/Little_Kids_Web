@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { kakaoLogin } from '../utils/api';
+import { useAuth } from '../hooks/useAuth';
 
 export function KakaoCallback() {
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const processedRef = useRef(false); // useRef로 중복 실행 방지 (렌더링과 무관)
+  const { setUserFromLogin } = useAuth();
 
   useEffect(() => {
     // 이미 처리된 경우 중복 실행 방지
@@ -40,6 +42,9 @@ export function KakaoCallback() {
         try {
           // 이미 여기서 토큰을 받았으므로, postMessage로는 성공 메시지만 전송
           const response = await kakaoLogin(code);
+          if (response.user_info) {
+            setUserFromLogin(response.user_info);
+          }
           // 성공 메시지만 전송 (코드는 전송하지 않음 - 이미 사용됨)
           window.opener?.postMessage(
             { type: 'KAKAO_AUTH_SUCCESS', userInfo: response.user_info },

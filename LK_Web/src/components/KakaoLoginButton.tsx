@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { getKakaoLoginUrl, kakaoLogin } from '../utils/api';
+import { getKakaoLoginUrl } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 
 export function KakaoLoginButton() {
   const [loading, setLoading] = useState(false);
-  const { refresh } = useAuth();
+  const { refresh, setUserFromLogin } = useAuth();
 
   const handleKakaoLogin = async () => {
     try {
@@ -42,6 +42,9 @@ export function KakaoLoginButton() {
         if (event.data.type === 'KAKAO_AUTH_SUCCESS') {
           // KakaoCallback에서 이미 로그인 처리가 완료됨
           messageProcessed = true;
+          if (event.data.userInfo) {
+            setUserFromLogin(event.data.userInfo);
+          }
           await refresh(); // 사용자 정보 새로고침
           window.removeEventListener('message', messageHandler);
           popup?.close();

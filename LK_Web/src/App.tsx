@@ -4,10 +4,12 @@ import styled from 'styled-components'
 import { KakaoLoginButton } from './components/KakaoLoginButton'
 import { KakaoCallback } from './pages/KakaoCallback'
 import { useAuth } from './hooks/useAuth'
+import { NicknameModal } from './components/NicknameModal'
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('Detection')
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, displayName } = useAuth()
+  const [nicknameModalOpen, setNicknameModalOpen] = useState(false)
 
   const tabs = ['Detection', 'Tracking', 'Counting', 'Analysis']
 
@@ -15,20 +17,21 @@ function AppContent() {
     <AppContainer>
       <Header>
         <Navbar>
-          <Logo>Little Kids</Logo>
-          <NavLinks>
-            <NavLink href="#features">Features</NavLink>
-            <NavLink href="#solutions">Solutions</NavLink>
-            <NavLink href="#pricing">Pricing</NavLink>
-            <NavLink href="#about">About</NavLink>
-          </NavLinks>
+          <LogoGroup>
+            <Logo>Little Kids</Logo>
+            <NavLinks>
+              <NavLink href="#features">Features</NavLink>
+              <NavLink href="#solutions">Solutions</NavLink>
+              <NavLink href="#pricing">Pricing</NavLink>
+              <NavLink href="#about">About</NavLink>
+            </NavLinks>
+          </LogoGroup>
           <AuthSection>
             {isAuthenticated && user ? (
               <UserInfo>
-                {user.profile_image && (
-                  <UserImage src={user.profile_image} alt={user.nickname || 'User'} />
-                )}
-                <UserName>{user.nickname || '사용자'}</UserName>
+                <UserNameButton type="button" onClick={() => setNicknameModalOpen(true)}>
+                  {displayName}
+                </UserNameButton>
                 <LogoutButton onClick={logout}>로그아웃</LogoutButton>
               </UserInfo>
             ) : (
@@ -48,7 +51,6 @@ function AppContent() {
           </HeroSubtitle>
           <CTAButtons>
             <Button variant="primary">Get Started</Button>
-            <Button variant="secondary">Request a Demo</Button>
           </CTAButtons>
         </HeroSection>
 
@@ -104,6 +106,7 @@ function AppContent() {
           </TabsContainer>
         </ImageSection>
       </MainContent>
+      <NicknameModal isOpen={nicknameModalOpen} onClose={() => setNicknameModalOpen(false)} />
     </AppContainer>
   )
 }
@@ -149,6 +152,17 @@ const Navbar = styled.nav`
   }
 `
 
+const LogoGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 40px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+  }
+`
+
 const Logo = styled.div`
   font-size: 24px;
   font-weight: 700;
@@ -177,17 +191,19 @@ const UserInfo = styled.div`
   gap: 12px;
 `
 
-const UserImage = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-`
-
-const UserName = styled.span`
+const UserNameButton = styled.button`
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #7c3aed;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #6d28d9;
+  }
 `
 
 const LogoutButton = styled.button`
@@ -231,8 +247,8 @@ const MainContent = styled.main`
 
 const HeroSection = styled.section`
   text-align: center;
-  margin-bottom: 64px;
-  padding: 32px 0;
+  margin-bottom: 48px;
+  padding: 24px 0 16px;
 `
 
 const HeroTitle = styled.h1`
