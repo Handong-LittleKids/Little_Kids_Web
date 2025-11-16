@@ -6,10 +6,12 @@ import { KakaoCallback } from './pages/KakaoCallback'
 import { useAuth } from './hooks/useAuth'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CreateMatchPage } from './pages/CreateMatchPage'
+import { useKakaoLogin } from './hooks/useKakaoLogin'
 
 function AppContent() {
   const { user, isAuthenticated, logout, displayName, loading } = useAuth()
   const navigate = useNavigate()
+  const { handleKakaoLogin, loading: kakaoLoading } = useKakaoLogin()
 
   // 로그인 상태라면 랜딩 페이지 대신 프로젝트 화면으로 자동 이동
   useEffect(() => {
@@ -54,7 +56,14 @@ function AppContent() {
             Player tracking · Event detection · Tactical insights — All automated.
           </HeroSubtitle>
           <CTAButtons>
-            <Button variant="primary">Get Started</Button>
+            <Button
+              variant="primary"
+              type="button"
+              onClick={handleKakaoLogin}
+              disabled={kakaoLoading}
+            >
+              {kakaoLoading ? '로그인 중...' : 'Get Started'}
+            </Button>
           </CTAButtons>
         </HeroSection>
 

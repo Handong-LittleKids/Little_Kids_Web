@@ -84,3 +84,42 @@ export async function logout(): Promise<void> {
   await apiRequest('/api/auth/logout', { method: 'POST' });
 }
 
+// 경기 비디오 업로드 (첫 프레임 이미지 생성)
+export async function uploadMatchVideo(
+  file: File
+): Promise<{ match_id: string; frame_url: string }> {
+  const token = tokenStorage.get();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/matches/upload`, {
+    method: 'POST',
+    body: formData,
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `HTTP error! status: ${response.status}`;
+    try {
+      const error = await response.json();
+      errorMessage = error.detail || error.message || error.error || errorMessage;
+    } catch {
+      errorMessage = `서버 오류 (${response.status})`;
+    }
+    console.error('업로드 API 오류:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  const data = await response.json();
+  return {
+    match_id: data.match_id,
+    frame_url: `${API_BASE_URL}${data.frame_url}`,
+  };
+}
+
+

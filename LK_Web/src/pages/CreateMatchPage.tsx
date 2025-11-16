@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { uploadMatchVideo } from '../utils/api'
 
 type MatchFile = {
   id: string
   file: File
 }
+
+type PitchPoint = { x: number; y: number }
 
 export function CreateMatchPage() {
   const { isAuthenticated, loading } = useAuth()
@@ -14,6 +17,11 @@ export function CreateMatchPage() {
   const [matchName, setMatchName] = useState('')
   const [files, setFiles] = useState<MatchFile[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [points, setPoints] = useState<PitchPoint[]>([])
+  const baseImageRef = useRef<HTMLImageElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [matchId, setMatchId] = useState<string | null>(null)
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -30,7 +38,7 @@ export function CreateMatchPage() {
     fileInputRef.current?.click()
   }
 
-  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || [])
     if (!selected.length) return
 
@@ -49,12 +57,35 @@ export function CreateMatchPage() {
       })),
     ]
     setFiles(nextFiles)
+
+    // 첫 번째 파일을 서버에 업로드해서 프레임 이미지 생성
+    const mainFile = nextFiles[0]
+    if (mainFile) {
+      try {
+        const result = await uploadMatchVideo(mainFile.file)
+        setMatchId(result.match_id)
+        setPreviewUrl(result.frame_url)
+        setPoints([])
+      } catch (error: any) {
+        console.error('매치 비디오 업로드 실패:', error)
+        window.alert(error?.message || '매치 비디오 업로드에 실패했습니다.')
+      }
+    }
+
     // 같은 파일 다시 선택 가능하도록 value 초기화
     e.target.value = ''
   }
 
   const handleRemoveFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id))
+    setFiles((prev) => {
+      const next = prev.filter((f) => f.id !== id)
+      if (next.length === 0) {
+        setPreviewUrl(null)
+        setMatchId(null)
+        setPoints([])
+      }
+      return next
+    })
   }
 
   const handleCancel = () => {
@@ -64,7 +95,9 @@ export function CreateMatchPage() {
   const handleCreate = () => {
     // 실제 업로드/생성 로직은 이후에 구현 예정
     console.log('Match name:', matchName)
+    console.log('Match ID:', matchId)
     console.log('Files:', files.map((f) => f.file))
+    console.log('Pitch points:', points)
     window.alert('업로드 이후 동작은 다음 단계에서 구현할 예정입니다.')
   }
 
@@ -118,6 +151,90 @@ export function CreateMatchPage() {
                     </FileItem>
                   ))}
                 </FileList>
+              )}
+
+              {previewUrl && (
+                <PitchPreviewSection>
+                  {/* 이미지를 보이지 않게 로드하고, 캔버스에 그리기 */}
+                  <HiddenImage
+                    ref={baseImageRef}
+                    src={previewUrl}
+                    onLoad={() => {
+                      const img = baseImageRef.current
+                      const canvas = canvasRef.current
+                      if (!img || !canvas) return
+                      const ctx = canvas.getContext('2d')
+                      if (!ctx) return
+
+                      const maxWidth = 520
+                      const vw = img.naturalWidth || 1280
+                      const vh = img.naturalHeight || 720
+                      const scale = maxWidth / vw
+                      const width = maxWidth
+                      const height = vh * scale
+
+                      canvas.width = width
+                      canvas.height = height
+
+                      ctx.drawImage(img, 0, 0, width, height)
+                    }}
+                  />
+
+                  <PitchCanvas
+                    ref={canvasRef}
+                    onClick={(e) => {
+                      const canvas = canvasRef.current
+                      const img = baseImageRef.current
+                      if (!canvas || !img) return
+                      const rect = canvas.getBoundingClientRect()
+                      const x = e.clientX - rect.left
+                      const y = e.clientY - rect.top
+
+                      setPoints((prev) => {
+                        const next = [...prev, { x, y }]
+                        const ctx = canvas.getContext('2d')
+                        if (ctx) {
+                          // 배경 프레임 다시 그리기
+                          const width = canvas.width
+                          const height = canvas.height
+                          ctx.clearRect(0, 0, width, height)
+                          ctx.drawImage(img, 0, 0, width, height)
+
+                          // 모든 포인트 다시 그림
+                          next.forEach((p, idx) => {
+                            ctx.beginPath()
+                            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
+                            ctx.fillStyle = '#22c55e'
+                            ctx.fill()
+
+                            ctx.font = '14px system-ui'
+                            ctx.fillStyle = '#f97316'
+                            ctx.fillText(String(idx + 1), p.x + 8, p.y - 6)
+                          })
+                        }
+                        return next
+                      })
+                    }}
+                  />
+                  <PitchHelpRow>
+                    <PitchHelpText>경기장 위를 클릭해서 기준 좌표를 찍어보세요.</PitchHelpText>
+                    <ClearPointsButton
+                      type="button"
+                      onClick={() => {
+                        setPoints([])
+                        const canvas = canvasRef.current
+                        const img = baseImageRef.current
+                        if (!canvas || !img) return
+                        const ctx = canvas.getContext('2d')
+                        if (!ctx) return
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+                      }}
+                    >
+                      좌표 초기화
+                    </ClearPointsButton>
+                  </PitchHelpRow>
+                </PitchPreviewSection>
               )}
             </UploadArea>
           </RightColumn>
@@ -314,6 +431,58 @@ const UploadText = styled.div`
 const UploadHint = styled.div`
   font-size: 13px;
   color: #6b7280;
+`
+
+const PitchPreviewSection = styled.div`
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
+const HiddenImage = styled.img`
+  display: none;
+`
+
+const PitchCanvas = styled.canvas`
+  width: 100%;
+  max-width: 520px;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+  cursor: crosshair;
+`
+
+const PitchHelpText = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+`
+
+const PitchHelpRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+`
+
+const ClearPointsButton = styled.button`
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  font-size: 11px;
+  color: #4b5563;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+
+  &:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+  }
 `
 
 const FileList = styled.ul`

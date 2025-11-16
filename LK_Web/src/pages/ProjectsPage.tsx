@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { NicknameModal } from '../components/NicknameModal'
 
 export function ProjectsPage() {
-  const { isAuthenticated, loading, displayName } = useAuth()
+  const { isAuthenticated, loading, displayName, logout } = useAuth()
   const navigate = useNavigate()
   const [nicknameModalOpen, setNicknameModalOpen] = useState(false)
 
@@ -36,6 +36,9 @@ export function ProjectsPage() {
           <UserChip type="button" onClick={() => setNicknameModalOpen(true)}>
             {displayName}
           </UserChip>
+          <LogoutButton type="button" onClick={logout}>
+            로그아웃
+          </LogoutButton>
         </SidebarFooter>
       </Sidebar>
 
@@ -157,6 +160,29 @@ const UserChip = styled.button`
 
   &:hover {
     background-color: rgba(31, 41, 55, 0.95);
+  }
+`
+
+const LogoutButton = styled.button`
+  margin-top: 8px;
+  width: 210px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e5e7eb;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(15, 23, 42, 0.75);
+    border-color: rgba(209, 213, 219, 0.9);
   }
 `
 
