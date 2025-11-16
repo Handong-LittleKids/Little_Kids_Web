@@ -48,7 +48,9 @@ export function ProjectsPage() {
           </Description>
 
           <ActionsRow>
-            <PrimaryButton>+ New Matches</PrimaryButton>
+            <PrimaryButton type="button" onClick={() => navigate('/matches/new')}>
+              + New Matches
+            </PrimaryButton>
           </ActionsRow>
         </MainInner>
       </MainArea>
