@@ -29,7 +29,7 @@ export function NicknameModal({ isOpen, onClose }: Props) {
     <Backdrop onClick={onClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
         <Title>표시할 이름을 입력하세요</Title>
-        <Description>닉네임은 로그인 후 헤더에 표시됩니다.</Description>
+        <Description>닉네임은 로그인 후 왼쪽 사이드바에 표시됩니다.</Description>
         <Form onSubmit={handleSubmit}>
           <Input
             value={nickname}

@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { KakaoLoginButton } from './components/KakaoLoginButton'
 import { KakaoCallback } from './pages/KakaoCallback'
 import { useAuth } from './hooks/useAuth'
-import { NicknameModal } from './components/NicknameModal'
 import { ProjectsPage } from './pages/ProjectsPage'
 
 function AppContent() {
   const { user, isAuthenticated, logout, displayName, loading } = useAuth()
-  const [nicknameModalOpen, setNicknameModalOpen] = useState(false)
   const navigate = useNavigate()
 
   // 로그인 상태라면 랜딩 페이지 대신 프로젝트 화면으로 자동 이동
@@ -36,9 +34,7 @@ function AppContent() {
           <AuthSection>
             {isAuthenticated && user ? (
               <UserInfo>
-                <UserNameButton type="button" onClick={() => setNicknameModalOpen(true)}>
-                  {displayName}
-                </UserNameButton>
+                <UserNameLabel>{displayName}</UserNameLabel>
                 <LogoutButton onClick={logout}>로그아웃</LogoutButton>
               </UserInfo>
             ) : (
@@ -102,7 +98,6 @@ function AppContent() {
           </ImageContainer>
         </ImageSection>
       </MainContent>
-      <NicknameModal isOpen={nicknameModalOpen} onClose={() => setNicknameModalOpen(false)} />
     </AppContainer>
   )
 }
@@ -188,19 +183,10 @@ const UserInfo = styled.div`
   gap: 12px;
 `
 
-const UserNameButton = styled.button`
+const UserNameLabel = styled.span`
   font-size: 14px;
   font-weight: 600;
   color: #7c3aed;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #6d28d9;
-  }
 `
 
 const LogoutButton = styled.button`

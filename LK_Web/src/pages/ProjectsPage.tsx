@@ -1,11 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
+import { NicknameModal } from '../components/NicknameModal'
 
 export function ProjectsPage() {
   const { isAuthenticated, loading, displayName } = useAuth()
   const navigate = useNavigate()
+  const [nicknameModalOpen, setNicknameModalOpen] = useState(false)
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -19,24 +21,22 @@ export function ProjectsPage() {
       <Sidebar>
         <SidebarHeader>
           <Brand>
-            <BrandLogo>LK</BrandLogo>
+            {/* <BrandLogo>LK</BrandLogo> */}
             <BrandText>Little Kids</BrandText>
           </Brand>
         </SidebarHeader>
 
-        <SidebarSectionLabel>Workspace</SidebarSectionLabel>
-        <NavList>
-          <NavItem active>Projects</NavItem>
-          <NavItem>Workflows</NavItem>
-          <NavItem>Monitoring</NavItem>
-          <NavItem>Deployments</NavItem>
-          <NavItem>Explore</NavItem>
-        </NavList>
-
         <SidebarFooter>
           <SidebarSectionLabel>Account</SidebarSectionLabel>
-          <UserChip>{displayName}</UserChip>
+          <UserChip type="button" onClick={() => setNicknameModalOpen(true)}>
+            {displayName}
+          </UserChip>
         </SidebarFooter>
+
+        <SidebarSectionLabel>Workspace</SidebarSectionLabel>
+        <NavList>
+          <NavItem active>Matches</NavItem>
+        </NavList>
       </Sidebar>
 
       <MainArea>
@@ -53,6 +53,10 @@ export function ProjectsPage() {
           </ActionsRow>
         </MainInner>
       </MainArea>
+      <NicknameModal
+        isOpen={nicknameModalOpen}
+        onClose={() => setNicknameModalOpen(false)}
+      />
     </PageWrapper>
   )
 }
@@ -65,7 +69,7 @@ const PageWrapper = styled.div`
 
 const Sidebar = styled.aside`
   width: 260px;
-  background: radial-gradient(circle at top left, #4f46e5, #111827 55%);
+  background: radial-gradient(circle at top left, #111827 55%, #4f46e5);
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -86,19 +90,6 @@ const Brand = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-`
-
-const BrandLogo = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
 `
 
 const BrandText = styled.div`
@@ -144,20 +135,27 @@ const NavItem = styled.button<{ active?: boolean }>`
 `
 
 const SidebarFooter = styled.div`
-  margin-top: auto;
+  margin-top: 5px;
 `
 
-const UserChip = styled.div`
+const UserChip = styled.button`
   margin-top: 4px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 999px;
   background-color: rgba(31, 41, 55, 0.85);
   font-size: 13px;
   color: #e5e7eb;
-  max-width: 100%;
+  width: 210px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(31, 41, 55, 0.95);
+  }
 `
 
 const MainArea = styled.main`
