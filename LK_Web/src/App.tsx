@@ -1,17 +1,24 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { KakaoLoginButton } from './components/KakaoLoginButton'
 import { KakaoCallback } from './pages/KakaoCallback'
 import { useAuth } from './hooks/useAuth'
 import { NicknameModal } from './components/NicknameModal'
+import { ProjectsPage } from './pages/ProjectsPage'
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState('Detection')
-  const { user, isAuthenticated, logout, displayName } = useAuth()
+  const { user, isAuthenticated, logout, displayName, loading } = useAuth()
   const [nicknameModalOpen, setNicknameModalOpen] = useState(false)
+  const navigate = useNavigate()
 
-  const tabs = ['Detection', 'Tracking', 'Counting', 'Analysis']
+  // 로그인 상태라면 랜딩 페이지 대신 프로젝트 화면으로 자동 이동
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate('/projects', { replace: true })
+    }
+  }, [isAuthenticated, loading, navigate])
+
 
   return (
     <AppContainer>
@@ -20,10 +27,10 @@ function AppContent() {
           <LogoGroup>
             <Logo>Little Kids</Logo>
             <NavLinks>
-              <NavLink href="#features">Features</NavLink>
+              {/* <NavLink href="#features">Features</NavLink>
               <NavLink href="#solutions">Solutions</NavLink>
-              <NavLink href="#pricing">Pricing</NavLink>
-              <NavLink href="#about">About</NavLink>
+              <NavLink href="#pricing">Pricing</NavLink> */}
+              <NavLink href="#about">About Us</NavLink>
             </NavLinks>
           </LogoGroup>
           <AuthSection>
@@ -44,7 +51,7 @@ function AppContent() {
       <MainContent>
         <HeroSection>
           <HeroTitle>
-            당신의 축구 영상을 데이터로 바꿔주는 가장 쉬운 방법
+            You can be a football tactics analyst, too
           </HeroTitle>
           <HeroSubtitle>
             Player tracking · Event detection · Tactical insights — All automated.
@@ -93,17 +100,6 @@ function AppContent() {
               Your browser does not support the video tag.
             </MainVideo>
           </ImageContainer>
-          <TabsContainer>
-            {tabs.map((tab) => (
-              <Tab
-                key={tab}
-                $active={activeTab === tab}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </Tab>
-            ))}
-          </TabsContainer>
         </ImageSection>
       </MainContent>
       <NicknameModal isOpen={nicknameModalOpen} onClose={() => setNicknameModalOpen(false)} />
@@ -116,6 +112,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<AppContent />} />
+        <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
       </Routes>
     </BrowserRouter>
@@ -247,7 +244,6 @@ const MainContent = styled.main`
 
 const HeroSection = styled.section`
   text-align: center;
-  margin-bottom: 48px;
   padding: 24px 0 16px;
 `
 
@@ -308,7 +304,7 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
 `
 
 const ImageSection = styled.section`
-  margin-top: 64px;
+  margin-top: 30px;
 `
 
 const ImageContainer = styled.div`
@@ -329,28 +325,5 @@ const MainVideo = styled.video`
   height: auto;
   display: block;
   object-fit: contain;
-  max-height: 80vh;
-`
-
-const TabsContainer = styled.div`
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-`
-
-const Tab = styled.button<{ $active?: boolean }>`
-  background-color: transparent;
-  color: ${props => props.$active ? '#7c3aed' : '#6b7280'};
-  border: none;
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  border-bottom: 2px solid ${props => props.$active ? '#7c3aed' : 'transparent'};
-  transition: all 0.2s;
-
-  &:hover {
-    color: #7c3aed;
-  }
+  max-height: 50vh;
 `
