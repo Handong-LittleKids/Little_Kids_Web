@@ -26,30 +26,29 @@ export function ProjectsPage() {
           </Brand>
         </SidebarHeader>
 
+        <SidebarSectionLabel>Workspace</SidebarSectionLabel>
+        <NavList>
+          <NavItem active>Matches</NavItem>
+        </NavList>
+
         <SidebarFooter>
           <SidebarSectionLabel>Account</SidebarSectionLabel>
           <UserChip type="button" onClick={() => setNicknameModalOpen(true)}>
             {displayName}
           </UserChip>
         </SidebarFooter>
-
-        <SidebarSectionLabel>Workspace</SidebarSectionLabel>
-        <NavList>
-          <NavItem active>Matches</NavItem>
-        </NavList>
       </Sidebar>
 
       <MainArea>
         <MainInner>
-          <SubTitle>Projects</SubTitle>
-          <Title>Build vision models to recognize anything</Title>
+          <SubTitle>Matches</SubTitle>
+          <Title>Build tatics to win the games</Title>
           <Description>
-            Upload your data, label it, and train vision models.
+            Upload your match, analyze it, and enjoy your games.
           </Description>
 
           <ActionsRow>
-            <PrimaryButton>+ New Project</PrimaryButton>
-            <SecondaryButton>View a Tutorial</SecondaryButton>
+            <PrimaryButton>+ New Matches</PrimaryButton>
           </ActionsRow>
         </MainInner>
       </MainArea>
@@ -135,7 +134,8 @@ const NavItem = styled.button<{ active?: boolean }>`
 `
 
 const SidebarFooter = styled.div`
-  margin-top: 5px;
+  margin-top: auto;
+  margin-bottom: 20px;
 `
 
 const UserChip = styled.button`
@@ -241,26 +241,6 @@ const PrimaryButton = styled.button`
   &:active {
     transform: translateY(0);
     box-shadow: 0 10px 26px rgba(79, 70, 229, 0.3);
-  }
-`
-
-const SecondaryButton = styled.button`
-  padding: 12px 22px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  color: #374151;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease,
-    border-color 0.12s ease;
-
-  &:hover {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
   }
 `
 
