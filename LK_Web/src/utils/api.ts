@@ -140,4 +140,22 @@ export async function uploadMatchVideo(
   };
 }
 
+// 경기장 좌표 저장
+export async function savePitchPoints(
+  matchId: string,
+  points: { x: number; y: number }[]
+): Promise<{ match_id: string; points_count: number; message: string }> {
+  return apiRequest(`/api/matches/${matchId}/pitch-points`, {
+    method: 'POST',
+    body: JSON.stringify(points),
+  });
+}
+
+// 경기장 좌표 조회
+export async function getPitchPoints(
+  matchId: string
+): Promise<{ match_id: string; points: { x: number; y: number }[] }> {
+  return apiRequest(`/api/matches/${matchId}/pitch-points`);
+}
+
 

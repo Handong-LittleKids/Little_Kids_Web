@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { uploadMatchVideo } from '../utils/api'
+import { uploadMatchVideo, savePitchPoints, getPitchPoints } from '../utils/api'
 
 type MatchFile = {
   id: string
   file: File
+  matchId?: string
+  frameUrl?: string
+  points: PitchPoint[]
 }
 
 type PitchPoint = { x: number; y: number }
@@ -17,11 +20,10 @@ export function CreateMatchPage() {
   const [matchName, setMatchName] = useState('')
   const [files, setFiles] = useState<MatchFile[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [points, setPoints] = useState<PitchPoint[]>([])
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const baseImageRef = useRef<HTMLImageElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [matchId, setMatchId] = useState<string | null>(null)
+  const [savingPoints, setSavingPoints] = useState(false)
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -49,26 +51,36 @@ export function CreateMatchPage() {
       window.alert('경기 영상은 최대 2개까지 업로드할 수 있습니다.')
     }
 
-    const nextFiles: MatchFile[] = [
-      ...files,
-      ...accepted.map((file) => ({
-        id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
-        file,
-      })),
-    ]
+    // 새 파일들을 먼저 추가 (아직 업로드 전)
+    const newFileIds = accepted.map((file) => ({
+      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+      file,
+      points: [] as PitchPoint[],
+    }))
+
+    const nextFiles: MatchFile[] = [...files, ...newFileIds]
     setFiles(nextFiles)
 
-    // 첫 번째 파일을 서버에 업로드해서 프레임 이미지 생성
-    const mainFile = nextFiles[0]
-    if (mainFile) {
+    // 새 파일들을 하나씩 업로드
+    for (const newFile of newFileIds) {
       try {
-        const result = await uploadMatchVideo(mainFile.file)
-        setMatchId(result.match_id)
-        setPreviewUrl(result.frame_url)
-        setPoints([])
+        const result = await uploadMatchVideo(newFile.file)
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === newFile.id
+              ? { ...f, matchId: result.match_id, frameUrl: result.frame_url }
+              : f
+          )
+        )
+        // 첫 번째 파일이면 자동으로 선택
+        if (nextFiles[0].id === newFile.id) {
+          setSelectedFileId(newFile.id)
+        }
       } catch (error: any) {
         console.error('매치 비디오 업로드 실패:', error)
         window.alert(error?.message || '매치 비디오 업로드에 실패했습니다.')
+        // 실패한 파일 제거
+        setFiles((prev) => prev.filter((f) => f.id !== newFile.id))
       }
     }
 
@@ -79,25 +91,103 @@ export function CreateMatchPage() {
   const handleRemoveFile = (id: string) => {
     setFiles((prev) => {
       const next = prev.filter((f) => f.id !== id)
-      if (next.length === 0) {
-        setPreviewUrl(null)
-        setMatchId(null)
-        setPoints([])
+      if (selectedFileId === id) {
+        // 삭제한 파일이 선택된 파일이면 다른 파일 선택 또는 null
+        setSelectedFileId(next.length > 0 ? next[0].id : null)
       }
       return next
     })
   }
 
+  const selectedFile = files.find((f) => f.id === selectedFileId)
+
+  // 영상 선택 시 해당 영상의 좌표 불러오기
+  useEffect(() => {
+    if (selectedFileId && selectedFile?.matchId) {
+      // 기존 좌표 불러오기
+      getPitchPoints(selectedFile.matchId)
+        .then((data) => {
+          if (data.points && data.points.length > 0) {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === selectedFileId ? { ...f, points: data.points } : f
+              )
+            )
+          }
+        })
+        .catch((error) => {
+          console.error('좌표 불러오기 실패:', error)
+        })
+    }
+  }, [selectedFileId, selectedFile?.matchId])
+
+  // 선택된 파일의 프레임 이미지 로드 후 캔버스 그리기
+  const handleImageLoad = () => {
+    const img = baseImageRef.current
+    const canvas = canvasRef.current
+    if (!img || !canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const maxWidth = 520
+    const vw = img.naturalWidth || 1280
+    const vh = img.naturalHeight || 720
+    const scale = maxWidth / vw
+    const width = maxWidth
+    const height = vh * scale
+
+    canvas.width = width
+    canvas.height = height
+
+    // 배경 프레임 그리기
+    ctx.drawImage(img, 0, 0, width, height)
+
+    // 저장된 포인트 다시 그리기
+    const currentFile = files.find((f) => f.id === selectedFileId)
+    if (currentFile && currentFile.points.length > 0) {
+      currentFile.points.forEach((p, idx) => {
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
+        ctx.fillStyle = '#22c55e'
+        ctx.fill()
+
+        ctx.font = '14px system-ui'
+        ctx.fillStyle = '#f97316'
+        ctx.fillText(String(idx + 1), p.x + 8, p.y - 6)
+      })
+    }
+  }
+
+  // points 변경 시 캔버스 다시 그리기
+  useEffect(() => {
+    if (selectedFile && selectedFile.frameUrl) {
+      handleImageLoad()
+    }
+  }, [selectedFile?.points, selectedFileId])
+
   const handleCancel = () => {
     navigate('/projects')
+  }
+
+  const handleSavePoints = async () => {
+    if (!selectedFile || !selectedFile.matchId) return
+
+    setSavingPoints(true)
+    try {
+      await savePitchPoints(selectedFile.matchId, selectedFile.points)
+      window.alert('좌표가 저장되었습니다.')
+    } catch (error: any) {
+      console.error('좌표 저장 실패:', error)
+      window.alert(error?.message || '좌표 저장에 실패했습니다.')
+    } finally {
+      setSavingPoints(false)
+    }
   }
 
   const handleCreate = () => {
     // 실제 업로드/생성 로직은 이후에 구현 예정
     console.log('Match name:', matchName)
-    console.log('Match ID:', matchId)
-    console.log('Files:', files.map((f) => f.file))
-    console.log('Pitch points:', points)
+    console.log('Files:', files.map((f) => ({ name: f.file.name, matchId: f.matchId, points: f.points })))
     window.alert('업로드 이후 동작은 다음 단계에서 구현할 예정입니다.')
   }
 
@@ -142,10 +232,31 @@ export function CreateMatchPage() {
 
               {files.length > 0 && (
                 <FileList>
-                  {files.map(({ id, file }) => (
-                    <FileItem key={id}>
-                      <FileName>{file.name}</FileName>
-                      <RemoveFileButton type="button" onClick={() => handleRemoveFile(id)}>
+                  {files.map(({ id, file, matchId, points }) => (
+                    <FileItem
+                      key={id}
+                      $selected={selectedFileId === id}
+                      onClick={() => {
+                        if (matchId) {
+                          setSelectedFileId(id)
+                        }
+                      }}
+                    >
+                      <FileInfo>
+                        <FileName>{file.name}</FileName>
+                        {matchId && (
+                          <FileStatus>
+                            {points.length > 0 ? `좌표 ${points.length}개` : '좌표 없음'}
+                          </FileStatus>
+                        )}
+                      </FileInfo>
+                      <RemoveFileButton
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveFile(id)
+                        }}
+                      >
                         제거
                       </RemoveFileButton>
                     </FileItem>
@@ -153,31 +264,13 @@ export function CreateMatchPage() {
                 </FileList>
               )}
 
-              {previewUrl && (
+              {selectedFile && selectedFile.frameUrl && (
                 <PitchPreviewSection>
                   {/* 이미지를 보이지 않게 로드하고, 캔버스에 그리기 */}
                   <HiddenImage
                     ref={baseImageRef}
-                    src={previewUrl}
-                    onLoad={() => {
-                      const img = baseImageRef.current
-                      const canvas = canvasRef.current
-                      if (!img || !canvas) return
-                      const ctx = canvas.getContext('2d')
-                      if (!ctx) return
-
-                      const maxWidth = 520
-                      const vw = img.naturalWidth || 1280
-                      const vh = img.naturalHeight || 720
-                      const scale = maxWidth / vw
-                      const width = maxWidth
-                      const height = vh * scale
-
-                      canvas.width = width
-                      canvas.height = height
-
-                      ctx.drawImage(img, 0, 0, width, height)
-                    }}
+                    src={selectedFile.frameUrl}
+                    onLoad={handleImageLoad}
                   />
 
                   <PitchCanvas
@@ -190,49 +283,69 @@ export function CreateMatchPage() {
                       const x = e.clientX - rect.left
                       const y = e.clientY - rect.top
 
-                      setPoints((prev) => {
-                        const next = [...prev, { x, y }]
-                        const ctx = canvas.getContext('2d')
-                        if (ctx) {
-                          // 배경 프레임 다시 그리기
-                          const width = canvas.width
-                          const height = canvas.height
-                          ctx.clearRect(0, 0, width, height)
-                          ctx.drawImage(img, 0, 0, width, height)
+                      setFiles((prev) =>
+                        prev.map((f) => {
+                          if (f.id === selectedFileId) {
+                            const next = [...f.points, { x, y }]
+                            const ctx = canvas.getContext('2d')
+                            if (ctx) {
+                              // 배경 프레임 다시 그리기
+                              const width = canvas.width
+                              const height = canvas.height
+                              ctx.clearRect(0, 0, width, height)
+                              ctx.drawImage(img, 0, 0, width, height)
 
-                          // 모든 포인트 다시 그림
-                          next.forEach((p, idx) => {
-                            ctx.beginPath()
-                            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
-                            ctx.fillStyle = '#22c55e'
-                            ctx.fill()
+                              // 모든 포인트 다시 그림
+                              next.forEach((p, idx) => {
+                                ctx.beginPath()
+                                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
+                                ctx.fillStyle = '#22c55e'
+                                ctx.fill()
 
-                            ctx.font = '14px system-ui'
-                            ctx.fillStyle = '#f97316'
-                            ctx.fillText(String(idx + 1), p.x + 8, p.y - 6)
-                          })
-                        }
-                        return next
-                      })
+                                ctx.font = '14px system-ui'
+                                ctx.fillStyle = '#f97316'
+                                ctx.fillText(String(idx + 1), p.x + 8, p.y - 6)
+                              })
+                            }
+                            return { ...f, points: next }
+                          }
+                          return f
+                        })
+                      )
                     }}
                   />
                   <PitchHelpRow>
                     <PitchHelpText>경기장 위를 클릭해서 기준 좌표를 찍어보세요.</PitchHelpText>
-                    <ClearPointsButton
-                      type="button"
-                      onClick={() => {
-                        setPoints([])
-                        const canvas = canvasRef.current
-                        const img = baseImageRef.current
-                        if (!canvas || !img) return
-                        const ctx = canvas.getContext('2d')
-                        if (!ctx) return
-                        ctx.clearRect(0, 0, canvas.width, canvas.height)
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-                      }}
-                    >
-                      좌표 초기화
-                    </ClearPointsButton>
+                    <ActionButtons>
+                      <ClearPointsButton
+                        type="button"
+                        onClick={() => {
+                          setFiles((prev) =>
+                            prev.map((f) =>
+                              f.id === selectedFileId ? { ...f, points: [] } : f
+                            )
+                          )
+                          const canvas = canvasRef.current
+                          const img = baseImageRef.current
+                          if (!canvas || !img) return
+                          const ctx = canvas.getContext('2d')
+                          if (!ctx) return
+                          ctx.clearRect(0, 0, canvas.width, canvas.height)
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+                        }}
+                      >
+                        좌표 초기화
+                      </ClearPointsButton>
+                      {selectedFile && selectedFile.matchId && selectedFile.points.length > 0 && (
+                        <SavePointsButton
+                          type="button"
+                          onClick={handleSavePoints}
+                          disabled={savingPoints}
+                        >
+                          {savingPoints ? '저장 중...' : '좌표 저장'}
+                        </SavePointsButton>
+                      )}
+                    </ActionButtons>
                   </PitchHelpRow>
                 </PitchPreviewSection>
               )}
@@ -466,6 +579,12 @@ const PitchHelpRow = styled.div`
   gap: 8px;
 `
 
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 6px;
+  align-items: center;
+`
+
 const ClearPointsButton = styled.button`
   padding: 4px 10px;
   border-radius: 999px;
@@ -485,6 +604,29 @@ const ClearPointsButton = styled.button`
   }
 `
 
+const SavePointsButton = styled.button`
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #6366f1;
+  background-color: #6366f1;
+  font-size: 11px;
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`
+
 const FileList = styled.ul`
   list-style: none;
   margin: 0;
@@ -494,24 +636,47 @@ const FileList = styled.ul`
   background-color: #f9fafb;
 `
 
-const FileItem = styled.li`
+const FileItem = styled.li<{ $selected?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
   font-size: 13px;
   color: #374151;
+  cursor: pointer;
+  background-color: ${({ $selected }) => ($selected ? '#f3f4f6' : 'transparent')};
+  border-left: 3px solid ${({ $selected }) => ($selected ? '#6366f1' : 'transparent')};
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+
+  &:hover {
+    background-color: ${({ $selected }) => ($selected ? '#e5e7eb' : '#f9fafb')};
+  }
 
   &:not(:last-child) {
     border-bottom: 1px solid #e5e7eb;
   }
 `
 
+const FileInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+`
+
 const FileName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-right: 12px;
+  font-weight: 500;
+`
+
+const FileStatus = styled.span`
+  font-size: 11px;
+  color: #6b7280;
 `
 
 const RemoveFileButton = styled.button`
