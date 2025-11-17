@@ -36,6 +36,15 @@ async function apiRequest<T>(
   });
 
   if (!response.ok) {
+    // 401 Unauthorized (토큰 만료 등) 시 자동으로 토큰 제거
+    if (response.status === 401) {
+      tokenStorage.remove();
+      // 페이지 리로드하여 로그인 화면으로 이동 (AuthContext가 토큰 없음을 감지)
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }
+    
     let errorMessage = `HTTP error! status: ${response.status}`;
     try {
       const error = await response.json();
@@ -104,6 +113,15 @@ export async function uploadMatchVideo(
   });
 
   if (!response.ok) {
+    // 401 Unauthorized (토큰 만료 등) 시 자동으로 토큰 제거
+    if (response.status === 401) {
+      tokenStorage.remove();
+      // 페이지 리로드하여 로그인 화면으로 이동
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }
+    
     let errorMessage = `HTTP error! status: ${response.status}`;
     try {
       const error = await response.json();
