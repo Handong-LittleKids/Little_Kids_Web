@@ -31,6 +31,7 @@ function AppContent() {
               {/* <NavLink href="#features">Features</NavLink>
               <NavLink href="#solutions">Solutions</NavLink>
               <NavLink href="#pricing">Pricing</NavLink> */}
+              <NavLink href="#usage">사용 방법</NavLink>
               <NavLink href="#about">About Us</NavLink>
             </NavLinks>
           </LogoGroup>
@@ -107,6 +108,35 @@ function AppContent() {
             </MainVideo>
           </ImageContainer>
         </ImageSection>
+
+        <UsageSection id="usage">
+          <UsageTitle>사용 방법</UsageTitle>
+          <UsageList>
+            <UsageItem>
+              <UsageNumber>1</UsageNumber>
+              <UsageText>꼭 2개의 카메라가 필요합니다.</UsageText>
+            </UsageItem>
+            <UsageItem>
+              <UsageNumber>2</UsageNumber>
+              <UsageText>서로 마주보는 꼭짓점에서 촬영해야 합니다.</UsageText>
+            </UsageItem>
+            <UsageItem>
+              <UsageNumber>3</UsageNumber>
+              <UsageText>카메라가 고정되어 있어야 합니다.</UsageText>
+            </UsageItem>
+            <UsageItem>
+              <UsageNumber>4</UsageNumber>
+              <UsageText>한 카메라가 반코트는 확실하게 촬영해야 합니다.</UsageText>
+            </UsageItem>
+            <UsageItem>
+              <UsageNumber>5</UsageNumber>
+              <UsageText>
+                화질은 높을수록 좋습니다. 낮은 경우 분석이 제대로 이뤄지지 않을 수 있습니다. 
+                <UsageNote>(저희의 경우 4K 24fps로 진행하였습니다.)</UsageNote>
+              </UsageText>
+            </UsageItem>
+          </UsageList>
+        </UsageSection>
       </MainContent>
     </AppContainer>
   )
@@ -323,4 +353,91 @@ const MainVideo = styled.video`
   display: block;
   object-fit: contain;
   max-height: 50vh;
+`
+
+const UsageSection = styled.section`
+  margin-top: 80px;
+  padding: 48px 32px;
+  background-color: #f9fafb;
+  border-radius: 16px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (max-width: 768px) {
+    margin-top: 48px;
+    padding: 32px 24px;
+  }
+`
+
+const UsageTitle = styled.h2`
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 32px;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+`
+
+const UsageList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`
+
+const UsageItem = styled.li`
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+`
+
+const UsageNumber = styled.div`
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+`
+
+const UsageText = styled.p`
+  font-size: 16px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+  flex: 1;
+  padding-top: 4px;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+`
+
+const UsageNote = styled.span`
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
 `
