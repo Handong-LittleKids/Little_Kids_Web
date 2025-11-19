@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { uploadMatchVideo, savePitchPoints, getPitchPoints } from '../utils/api'
+import { uploadMatchVideo, extractFrame, savePitchPoints, getPitchPoints } from '../utils/api'
 
 type MatchFile = {
   id: string
@@ -24,6 +24,7 @@ export function CreateMatchPage() {
   const baseImageRef = useRef<HTMLImageElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [savingPoints, setSavingPoints] = useState(false)
+  const [extractingFrame, setExtractingFrame] = useState<string | null>(null) // 추출 중인 파일 ID
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -61,14 +62,14 @@ export function CreateMatchPage() {
     const nextFiles: MatchFile[] = [...files, ...newFileIds]
     setFiles(nextFiles)
 
-    // 새 파일들을 하나씩 업로드
+    // 새 파일들을 하나씩 업로드 (임시 저장만)
     for (const newFile of newFileIds) {
       try {
         const result = await uploadMatchVideo(newFile.file)
         setFiles((prev) =>
           prev.map((f) =>
             f.id === newFile.id
-              ? { ...f, matchId: result.match_id, frameUrl: result.frame_url }
+              ? { ...f, matchId: result.match_id }
               : f
           )
         )
@@ -97,6 +98,37 @@ export function CreateMatchPage() {
       }
       return next
     })
+  }
+
+  const handleExtractFrame = async (fileId: string) => {
+    const file = files.find((f) => f.id === fileId)
+    if (!file || !file.matchId) {
+      window.alert('매치 ID를 찾을 수 없습니다.')
+      return
+    }
+
+    setExtractingFrame(fileId)
+    try {
+      const result = await extractFrame(file.matchId)
+      // frame_url이 전체 URL이면 그대로 사용, 상대 경로면 API_BASE_URL 추가
+      const frameUrl = result.frame_url.startsWith('http')
+        ? result.frame_url
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${result.frame_url}`
+      
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === fileId
+            ? { ...f, frameUrl }
+            : f
+        )
+      )
+      window.alert('첫 프레임이 추출되었습니다!')
+    } catch (error: any) {
+      console.error('프레임 추출 실패:', error)
+      window.alert(error?.message || '프레임 추출에 실패했습니다.')
+    } finally {
+      setExtractingFrame(null)
+    }
   }
 
   const selectedFile = files.find((f) => f.id === selectedFileId)
@@ -270,12 +302,12 @@ export function CreateMatchPage() {
 
               {files.length > 0 && (
                 <FileList>
-                  {files.map(({ id, file, matchId, points }) => (
+                  {files.map(({ id, file, matchId, frameUrl, points }) => (
                     <FileItem
                       key={id}
                       $selected={selectedFileId === id}
                       onClick={() => {
-                        if (matchId) {
+                        if (matchId && frameUrl) {
                           setSelectedFileId(id)
                         }
                       }}
@@ -284,19 +316,33 @@ export function CreateMatchPage() {
                         <FileName>{file.name}</FileName>
                         {matchId && (
                           <FileStatus>
-                            {points.length > 0 ? `좌표 ${points.length}개` : '좌표 없음'}
+                            {frameUrl ? (points.length > 0 ? `좌표 ${points.length}개` : '좌표 없음') : '프레임 미추출'}
                           </FileStatus>
                         )}
                       </FileInfo>
-                      <RemoveFileButton
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemoveFile(id)
-                        }}
-                      >
-                        제거
-                      </RemoveFileButton>
+                      <FileActions>
+                        {matchId && !frameUrl && (
+                          <ExtractFrameButton
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleExtractFrame(id)
+                            }}
+                            disabled={extractingFrame === id}
+                          >
+                            {extractingFrame === id ? '추출 중...' : '첫 프레임 추출'}
+                          </ExtractFrameButton>
+                        )}
+                        <RemoveFileButton
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveFile(id)
+                          }}
+                        >
+                          제거
+                        </RemoveFileButton>
+                      </FileActions>
                     </FileItem>
                   ))}
                 </FileList>
@@ -309,6 +355,11 @@ export function CreateMatchPage() {
                     ref={baseImageRef}
                     src={selectedFile.frameUrl}
                     onLoad={handleImageLoad}
+                    onError={(e) => {
+                      console.error('이미지 로드 실패:', selectedFile.frameUrl)
+                      console.error('이미지 로드 에러:', e)
+                      window.alert('프레임 이미지를 불러올 수 없습니다. S3 접근 권한을 확인해주세요.')
+                    }}
                   />
 
                   <PitchCanvas
@@ -715,6 +766,34 @@ const FileName = styled.span`
 const FileStatus = styled.span`
   font-size: 11px;
   color: #6b7280;
+`
+
+const FileActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+
+const ExtractFrameButton = styled.button`
+  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `
 
 const RemoveFileButton = styled.button`

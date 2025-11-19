@@ -93,10 +93,10 @@ export async function logout(): Promise<void> {
   await apiRequest('/api/auth/logout', { method: 'POST' });
 }
 
-// 경기 비디오 업로드 (첫 프레임 이미지 생성)
+// 경기 비디오 업로드 (임시 저장만, 프레임 추출은 별도)
 export async function uploadMatchVideo(
   file: File
-): Promise<{ match_id: string; frame_url: string }> {
+): Promise<{ match_id: string; message: string }> {
   const token = tokenStorage.get();
   const formData = new FormData();
   formData.append('file', file);
@@ -136,19 +136,59 @@ export async function uploadMatchVideo(
   const data = await response.json();
   return {
     match_id: data.match_id,
-    frame_url: `${API_BASE_URL}${data.frame_url}`,
+    message: data.message,
   };
+}
+
+// 첫 프레임 추출 및 S3 저장
+export async function extractFrame(
+  matchId: string
+): Promise<{ match_id: string; frame_url: string; video_url?: string; message: string }> {
+  return apiRequest(`/api/matches/${matchId}/extract-frame`, {
+    method: 'POST',
+  });
 }
 
 // 경기장 좌표 저장
 export async function savePitchPoints(
   matchId: string,
   points: { x: number; y: number }[]
-): Promise<{ match_id: string; points_count: number; message: string }> {
-  return apiRequest(`/api/matches/${matchId}/pitch-points`, {
+): Promise<{ match_id: string; points_count: number; points_url?: string; annotated_image_url?: string; message: string }> {
+  // FastAPI가 배열을 직접 받을 수 있도록 Body를 사용하므로 배열을 직접 보냄
+  const token = tokenStorage.get();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/matches/${matchId}/pitch-points`, {
     method: 'POST',
+    headers,
     body: JSON.stringify(points),
   });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      tokenStorage.remove();
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }
+    
+    let errorMessage = `HTTP error! status: ${response.status}`;
+    try {
+      const error = await response.json();
+      errorMessage = error.detail || error.message || error.error || errorMessage;
+    } catch {
+      errorMessage = `서버 오류 (${response.status})`;
+    }
+    console.error('좌표 저장 API 오류:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
 }
 
 // 경기장 좌표 조회
