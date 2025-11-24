@@ -198,4 +198,52 @@ export async function getPitchPoints(
   return apiRequest(`/api/matches/${matchId}/pitch-points`);
 }
 
+// 매치 타입 정의
+export type MatchVideoInfo = {
+  match_id: string
+  video_url?: string
+  frame_url?: string
+  points: { x: number; y: number }[]
+}
+
+export type Match = {
+  match_id: string
+  name: string
+  user_id: string
+  videos: MatchVideoInfo[]
+  status: 'created' | 'analyzing' | 'completed' | 'failed'
+  created_at: string
+  updated_at: string
+}
+
+export type MatchListItem = {
+  match_id: string
+  name: string
+  status: 'created' | 'analyzing' | 'completed' | 'failed'
+  created_at: string
+  updated_at: string
+  videos_count: number
+}
+
+// 매치 생성
+export async function createMatch(
+  name: string,
+  videos: MatchVideoInfo[]
+): Promise<{ match_id: string; name: string; status: string; message: string }> {
+  return apiRequest('/api/matches', {
+    method: 'POST',
+    body: JSON.stringify({ name, videos }),
+  });
+}
+
+// 매치 목록 조회
+export async function listMatches(): Promise<{ matches: MatchListItem[] }> {
+  return apiRequest('/api/matches');
+}
+
+// 매치 상세 조회
+export async function getMatch(matchId: string): Promise<Match> {
+  return apiRequest(`/api/matches/${matchId}`);
+}
+
 

@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { uploadMatchVideo, extractFrame, savePitchPoints, getPitchPoints } from '../utils/api'
+import { uploadMatchVideo, extractFrame, savePitchPoints, getPitchPoints, createMatch, type MatchVideoInfo } from '../utils/api'
 
 type MatchFile = {
   id: string
   file: File
   matchId?: string
   frameUrl?: string
+  videoUrl?: string
   points: PitchPoint[]
 }
 
@@ -25,6 +26,7 @@ export function CreateMatchPage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [savingPoints, setSavingPoints] = useState(false)
   const [extractingFrame, setExtractingFrame] = useState<string | null>(null) // 추출 중인 파일 ID
+  const [creatingMatch, setCreatingMatch] = useState(false)
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -118,7 +120,7 @@ export function CreateMatchPage() {
       setFiles((prev) =>
         prev.map((f) =>
           f.id === fileId
-            ? { ...f, frameUrl }
+            ? { ...f, frameUrl, videoUrl: result.video_url }
             : f
         )
       )
@@ -216,11 +218,53 @@ export function CreateMatchPage() {
     }
   }
 
-  const handleCreate = () => {
-    // 실제 업로드/생성 로직은 이후에 구현 예정
-    console.log('Match name:', matchName)
-    console.log('Files:', files.map((f) => ({ name: f.file.name, matchId: f.matchId, points: f.points })))
-    window.alert('업로드 이후 동작은 다음 단계에서 구현할 예정입니다.')
+  const handleCreate = async () => {
+    // 유효성 검사
+    if (!matchName.trim()) {
+      window.alert('매치 이름을 입력해주세요.')
+      return
+    }
+
+    if (files.length === 0) {
+      window.alert('최소 1개 이상의 영상을 업로드해주세요.')
+      return
+    }
+
+    // 모든 파일이 프레임 추출되었는지 확인
+    const filesWithoutFrame = files.filter(f => !f.frameUrl)
+    if (filesWithoutFrame.length > 0) {
+      window.alert('모든 영상의 첫 프레임을 추출해주세요.')
+      return
+    }
+
+    // 모든 파일이 좌표를 가지고 있는지 확인 (4개)
+    const filesWithoutPoints = files.filter(f => f.points.length !== 4)
+    if (filesWithoutPoints.length > 0) {
+      window.alert('모든 영상에 4개의 좌표를 찍어주세요.')
+      return
+    }
+
+    setCreatingMatch(true)
+    try {
+      // 비디오 정보 구성 (1번, 2번 순서대로)
+      const videos: MatchVideoInfo[] = files.map((f) => ({
+        match_id: f.matchId!,
+        video_url: f.videoUrl,
+        frame_url: f.frameUrl!,
+        points: f.points.map(p => ({ x: p.x, y: p.y }))
+      }))
+
+      // 매치 생성
+      await createMatch(matchName.trim(), videos)
+      
+      window.alert('매치가 생성되었습니다!')
+      navigate('/projects')
+    } catch (error: any) {
+      console.error('매치 생성 실패:', error)
+      window.alert(error?.message || '매치 생성에 실패했습니다.')
+    } finally {
+      setCreatingMatch(false)
+    }
   }
 
   return (
@@ -451,10 +495,10 @@ export function CreateMatchPage() {
             <FooterButton
               type="button"
               variant="primary"
-              disabled={!matchName || files.length === 0}
+              disabled={!matchName || files.length === 0 || creatingMatch}
               onClick={handleCreate}
             >
-              Create Match
+              {creatingMatch ? '생성 중...' : 'Create Match'}
             </FooterButton>
           </FooterButtons>
         </FooterRow>

@@ -6,6 +6,7 @@ import { KakaoCallback } from './pages/KakaoCallback'
 import { useAuth } from './hooks/useAuth'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CreateMatchPage } from './pages/CreateMatchPage'
+import { MatchDetailPage } from './pages/MatchDetailPage'
 import { useKakaoLogin } from './hooks/useKakaoLogin'
 
 function AppContent() {
@@ -149,6 +150,7 @@ function App() {
         <Route path="/" element={<AppContent />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/matches/new" element={<CreateMatchPage />} />
+        <Route path="/matches/:matchId" element={<MatchDetailPage />} />
         <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
       </Routes>
     </BrowserRouter>
