@@ -42,12 +42,13 @@ export function MatchDetailPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('ko-KR', {
+    return date.toLocaleString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     })
   }
 
@@ -132,7 +133,7 @@ export function MatchDetailPage() {
                 <StatusBadge $color={getStatusColor(match.status)}>
                   {getStatusText(match.status)}
                 </StatusBadge>
-                <MetaText>Created {formatDate(match.created_at)}</MetaText>
+                <MetaText>{formatDate(match.created_at)}</MetaText>
               </MatchMeta>
             </TitleSection>
             <HeaderActions>
@@ -187,9 +188,36 @@ export function MatchDetailPage() {
                     <VideoId>ID: {video.match_id}</VideoId>
                   </VideoCardHeader>
                   <VideoCardBody>
-                    {video.frame_url && (
+                    {video.frame_url ? (
                       <VideoThumbnail>
-                        <ThumbnailImage src={video.frame_url} alt={`Video ${index + 1} thumbnail`} />
+                        <ThumbnailImage 
+                          src={video.frame_url.startsWith('http') 
+                            ? video.frame_url 
+                            : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${video.frame_url}`} 
+                          alt={`Video ${index + 1} thumbnail`}
+                          onError={(e) => {
+                            console.error(`Video ${index + 1} 썸네일 로드 실패:`, video.frame_url)
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            // 플레이스홀더 표시
+                            const placeholder = target.nextElementSibling as HTMLElement
+                            if (placeholder) {
+                              placeholder.style.display = 'flex'
+                            }
+                          }}
+                          onLoad={() => {
+                            console.log(`Video ${index + 1} 썸네일 로드 성공:`, video.frame_url)
+                          }}
+                        />
+                        <VideoThumbnailPlaceholder style={{ display: 'none' }}>
+                          Video {index + 1}
+                        </VideoThumbnailPlaceholder>
+                      </VideoThumbnail>
+                    ) : (
+                      <VideoThumbnail>
+                        <VideoThumbnailPlaceholder>
+                          Video {index + 1}
+                        </VideoThumbnailPlaceholder>
                       </VideoThumbnail>
                     )}
                     <VideoInfo>
@@ -563,6 +591,7 @@ const VideoThumbnail = styled.div`
   border-radius: 6px;
   overflow: hidden;
   background-color: #f3f4f6;
+  position: relative;
 
   @media (max-width: 640px) {
     width: 100%;
@@ -575,6 +604,24 @@ const ThumbnailImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+`
+
+const VideoThumbnailPlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  position: absolute;
+  top: 0;
+  left: 0;
 `
 
 const VideoInfo = styled.div`

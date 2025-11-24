@@ -247,4 +247,24 @@ export async function getMatch(matchId: string): Promise<Match> {
   return apiRequest(`/api/matches/${matchId}`);
 }
 
+// 매치 이름 변경
+export async function updateMatch(
+  matchId: string,
+  name: string
+): Promise<{ match_id: string; name: string; message: string }> {
+  return apiRequest(`/api/matches/${matchId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
+}
+
+// 매치 삭제
+export async function deleteMatch(
+  matchId: string
+): Promise<{ match_id: string; message: string }> {
+  return apiRequest(`/api/matches/${matchId}`, {
+    method: 'DELETE',
+  });
+}
+
 
