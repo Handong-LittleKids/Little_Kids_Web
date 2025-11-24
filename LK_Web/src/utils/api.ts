@@ -223,6 +223,7 @@ export type MatchListItem = {
   created_at: string
   updated_at: string
   videos_count: number
+  thumbnail_url?: string | null
 }
 
 // 매치 생성

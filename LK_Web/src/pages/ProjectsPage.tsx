@@ -5,6 +5,37 @@ import { useAuth } from '../hooks/useAuth'
 import { NicknameModal } from '../components/NicknameModal'
 import { listMatches, type MatchListItem } from '../utils/api'
 
+// 매치 썸네일 컴포넌트
+function MatchThumbnailContent({ match }: { match: MatchListItem }) {
+  const [imageError, setImageError] = useState(false)
+  const thumbnailUrl = match.thumbnail_url
+    ? (match.thumbnail_url.startsWith('http') 
+        ? match.thumbnail_url 
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${match.thumbnail_url}`)
+    : null
+
+  if (thumbnailUrl && !imageError) {
+    return (
+      <>
+        <ThumbnailImage
+          src={thumbnailUrl}
+          alt={match.name}
+          onError={() => setImageError(true)}
+        />
+        <MatchThumbnailPlaceholder style={{ display: 'none' }}>
+          {match.name.charAt(0).toUpperCase()}
+        </MatchThumbnailPlaceholder>
+      </>
+    )
+  }
+
+  return (
+    <MatchThumbnailPlaceholder>
+      {match.name.charAt(0).toUpperCase()}
+    </MatchThumbnailPlaceholder>
+  )
+}
+
 export function ProjectsPage() {
   const { isAuthenticated, loading, displayName, logout } = useAuth()
   const navigate = useNavigate()
@@ -149,9 +180,7 @@ export function ProjectsPage() {
               >
                 <MatchCardHeader>
                   <MatchThumbnail>
-                    <MatchThumbnailPlaceholder>
-                      {match.name.charAt(0).toUpperCase()}
-                    </MatchThumbnailPlaceholder>
+                    <MatchThumbnailContent match={match} />
                   </MatchThumbnail>
                   <MatchCardMenu>
                     <MenuIcon>⋯</MenuIcon>
@@ -455,6 +484,16 @@ const MatchThumbnail = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+`
+
+const ThumbnailImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
 `
 
 const MatchThumbnailPlaceholder = styled.div`
@@ -467,6 +506,9 @@ const MatchThumbnailPlaceholder = styled.div`
   color: #ffffff;
   font-size: 32px;
   font-weight: 700;
+  position: absolute;
+  top: 0;
+  left: 0;
 `
 
 const MatchCardMenu = styled.button`
