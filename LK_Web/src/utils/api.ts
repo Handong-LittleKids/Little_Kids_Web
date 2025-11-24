@@ -264,7 +264,16 @@ export async function deleteMatch(
 ): Promise<{ match_id: string; message: string }> {
   return apiRequest(`/api/matches/${matchId}`, {
     method: 'DELETE',
-  });
+  })
+}
+
+// 매치 분석 시작
+export async function startAnalysis(
+  matchId: string
+): Promise<{ match_id: string; status: string; message: string }> {
+  return apiRequest(`/api/matches/${matchId}/analyze`, {
+    method: 'POST',
+  })
 }
 
 

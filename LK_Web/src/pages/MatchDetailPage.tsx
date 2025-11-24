@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
-import { getMatch, type Match } from '../utils/api'
+import { getMatch, startAnalysis, type Match } from '../utils/api'
 
 export function MatchDetailPage() {
   const { isAuthenticated, loading } = useAuth()
@@ -37,6 +37,24 @@ export function MatchDetailPage() {
       navigate('/projects')
     } finally {
       setLoadingMatch(false)
+    }
+  }
+
+  const handleStartAnalysis = async () => {
+    if (!matchId) return
+    
+    if (!window.confirm('분석을 시작하시겠습니까? 이 작업은 시간이 걸릴 수 있습니다.')) {
+      return
+    }
+
+    try {
+      await startAnalysis(matchId)
+      window.alert('분석이 시작되었습니다. 잠시 후 페이지를 새로고침해주세요.')
+      // 매치 데이터 다시 불러오기
+      await loadMatch()
+    } catch (error: any) {
+      console.error('분석 시작 실패:', error)
+      window.alert(error?.message || '분석 시작에 실패했습니다.')
     }
   }
 
@@ -138,7 +156,7 @@ export function MatchDetailPage() {
             </TitleSection>
             <HeaderActions>
               {match.status === 'created' && (
-                <AnalyzeButton type="button">
+                <AnalyzeButton type="button" onClick={handleStartAnalysis}>
                   Start Analysis
                 </AnalyzeButton>
               )}
@@ -146,6 +164,16 @@ export function MatchDetailPage() {
                 <AnalyzingButton type="button" disabled>
                   Analyzing...
                 </AnalyzingButton>
+              )}
+              {match.status === 'completed' && (
+                <CompletedButton type="button" disabled>
+                  Analysis Completed
+                </CompletedButton>
+              )}
+              {match.status === 'failed' && (
+                <FailedButton type="button" onClick={handleStartAnalysis}>
+                  Retry Analysis
+                </FailedButton>
               )}
             </HeaderActions>
           </HeaderTop>
@@ -480,6 +508,35 @@ const AnalyzingButton = styled.button`
   font-weight: 600;
   cursor: not-allowed;
   opacity: 0.7;
+`
+
+const CompletedButton = styled.button`
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background-color: #22c55e;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  opacity: 0.7;
+`
+
+const FailedButton = styled.button`
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+  }
 `
 
 const Content = styled.div`
