@@ -269,6 +269,81 @@ export function MatchDetailPage() {
               ))}
             </VideosList>
           </Section>
+
+          {match.status === 'completed' && (match.csv_url || match.result_video_url) && (
+            <Section>
+              <SectionTitle>Analysis Results</SectionTitle>
+              <ResultsContainer>
+                {match.result_video_url && (
+                  <ResultItem>
+                    <ResultLabel>2D Homography Visualization</ResultLabel>
+                    <ResultVideoContainer>
+                      <ResultVideo
+                        src={match.result_video_url}
+                        controls
+                        preload="metadata"
+                        onError={(e) => {
+                          console.error('결과 영상 로드 실패:', match.result_video_url)
+                          const target = e.target as HTMLVideoElement
+                          target.style.display = 'none'
+                          const errorMsg = target.nextElementSibling as HTMLElement
+                          if (errorMsg) {
+                            errorMsg.style.display = 'block'
+                          }
+                        }}
+                      />
+                      <VideoErrorMsg style={{ display: 'none' }}>
+                        영상을 불러올 수 없습니다.
+                      </VideoErrorMsg>
+                    </ResultVideoContainer>
+                    <ResultActions>
+                      <DownloadButton
+                        href={match.result_video_url}
+                        download={`${match.name}_result.mp4`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Download Video
+                      </DownloadButton>
+                    </ResultActions>
+                  </ResultItem>
+                )}
+                
+                {match.csv_url && (
+                  <ResultItem>
+                    <ResultLabel>Tracking Data (CSV)</ResultLabel>
+                    <ResultDescription>
+                      Player and ball tracking data with world coordinates
+                    </ResultDescription>
+                    <ResultActions>
+                      <DownloadButton
+                        href={match.csv_url}
+                        download={`${match.name}_tracks.csv`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Download CSV
+                      </DownloadButton>
+                    </ResultActions>
+                  </ResultItem>
+                )}
+              </ResultsContainer>
+            </Section>
+          )}
+
+          {match.status === 'analyzing' && match.progress !== undefined && (
+            <Section>
+              <SectionTitle>Analysis Progress</SectionTitle>
+              <ProgressContainer>
+                <ProgressBar>
+                  <ProgressFill $width={match.progress} />
+                </ProgressBar>
+                <ProgressText>
+                  {match.progress}% {match.status_message ? `- ${match.status_message}` : ''}
+                </ProgressText>
+              </ProgressContainer>
+            </Section>
+          )}
         </Content>
       </MainArea>
     </PageWrapper>
@@ -713,5 +788,107 @@ const VideoLink = styled.a`
   &:hover {
     text-decoration: underline;
   }
+`
+
+const ResultsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`
+
+const ResultItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`
+
+const ResultLabel = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+`
+
+const ResultDescription = styled.div`
+  font-size: 14px;
+  color: #6b7280;
+`
+
+const ResultVideoContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #000000;
+  position: relative;
+`
+
+const ResultVideo = styled.video`
+  width: 100%;
+  height: auto;
+  display: block;
+`
+
+const VideoErrorMsg = styled.div`
+  padding: 40px;
+  text-align: center;
+  color: #ef4444;
+  background-color: #fef2f2;
+  border-radius: 8px;
+`
+
+const ResultActions = styled.div`
+  display: flex;
+  gap: 12px;
+`
+
+const DownloadButton = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #6366f1;
+  background-color: #6366f1;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    transform: translateY(-1px);
+  }
+`
+
+const ProgressContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 24px;
+  background-color: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+`
+
+const ProgressFill = styled.div<{ $width: number }>`
+  height: 100%;
+  width: ${({ $width }) => $width}%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 12px;
+  transition: width 0.3s ease;
+`
+
+const ProgressText = styled.div`
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
 `
 

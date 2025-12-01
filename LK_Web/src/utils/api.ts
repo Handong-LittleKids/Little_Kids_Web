@@ -214,6 +214,10 @@ export type Match = {
   status: 'created' | 'analyzing' | 'completed' | 'failed'
   created_at: string
   updated_at: string
+  csv_url?: string
+  result_video_url?: string
+  progress?: number
+  status_message?: string
 }
 
 export type MatchListItem = {
