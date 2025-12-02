@@ -321,4 +321,42 @@ export async function getLLMReport(
   })
 }
 
+// LLM 리포트 HTML 내용 가져오기
+export async function getLLMReportHTML(matchId: string): Promise<string> {
+  const token = tokenStorage.get()
+  const headers: Record<string, string> = {
+    'Content-Type': 'text/html',
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/matches/${matchId}/llm-report/html`, {
+    method: 'GET',
+    headers,
+  })
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      tokenStorage.remove()
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      }
+    }
+    
+    let errorMessage = `HTTP error! status: ${response.status}`
+    try {
+      const error = await response.json()
+      errorMessage = error.detail || error.message || error.error || errorMessage
+    } catch {
+      errorMessage = `서버 오류 (${response.status})`
+    }
+    console.error('API 오류:', errorMessage)
+    throw new Error(errorMessage)
+  }
+
+  return response.text()
+}
+
 
