@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
-import { getMatch, startAnalysis, type Match } from '../utils/api'
+import { getMatch, startAnalysis, getPresignedUrl, type Match } from '../utils/api'
 
 export function MatchDetailPage() {
   const { isAuthenticated, loading } = useAuth()
@@ -10,6 +10,10 @@ export function MatchDetailPage() {
   const { matchId } = useParams<{ matchId: string }>()
   const [match, setMatch] = useState<Match | null>(null)
   const [loadingMatch, setLoadingMatch] = useState(true)
+  const [presignedUrls, setPresignedUrls] = useState<{
+    csv?: string
+    video?: string
+  }>({})
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -31,6 +35,31 @@ export function MatchDetailPage() {
       setLoadingMatch(true)
       const data = await getMatch(matchId)
       setMatch(data)
+      
+      // 분석 완료된 경우 Presigned URL 가져오기
+      if (data.status === 'completed') {
+        const urls: { csv?: string; video?: string } = {}
+        
+        if (data.csv_url) {
+          try {
+            const csvResult = await getPresignedUrl(matchId, 'csv')
+            urls.csv = csvResult.presigned_url
+          } catch (error) {
+            console.error('CSV Presigned URL 가져오기 실패:', error)
+          }
+        }
+        
+        if (data.result_video_url) {
+          try {
+            const videoResult = await getPresignedUrl(matchId, 'video')
+            urls.video = videoResult.presigned_url
+          } catch (error) {
+            console.error('Video Presigned URL 가져오기 실패:', error)
+          }
+        }
+        
+        setPresignedUrls(urls)
+      }
     } catch (error: any) {
       console.error('매치 불러오기 실패:', error)
       window.alert(error?.message || '매치를 불러올 수 없습니다.')
@@ -279,16 +308,34 @@ export function MatchDetailPage() {
                     <ResultLabel>2D Homography Visualization</ResultLabel>
                     <ResultVideoContainer>
                       <ResultVideo
-                        src={match.result_video_url}
+                        src={presignedUrls.video || match.result_video_url}
                         controls
                         preload="metadata"
-                        onError={(e) => {
+                        onError={async (e) => {
                           console.error('결과 영상 로드 실패:', match.result_video_url)
-                          const target = e.target as HTMLVideoElement
-                          target.style.display = 'none'
-                          const errorMsg = target.nextElementSibling as HTMLElement
-                          if (errorMsg) {
-                            errorMsg.style.display = 'block'
+                          // Presigned URL이 없거나 만료된 경우 다시 가져오기
+                          if (!presignedUrls.video && matchId) {
+                            try {
+                              const videoResult = await getPresignedUrl(matchId, 'video')
+                              const target = e.target as HTMLVideoElement
+                              target.src = videoResult.presigned_url
+                              setPresignedUrls(prev => ({ ...prev, video: videoResult.presigned_url }))
+                            } catch (error) {
+                              console.error('Presigned URL 재생성 실패:', error)
+                              const target = e.target as HTMLVideoElement
+                              target.style.display = 'none'
+                              const errorMsg = target.nextElementSibling as HTMLElement
+                              if (errorMsg) {
+                                errorMsg.style.display = 'block'
+                              }
+                            }
+                          } else {
+                            const target = e.target as HTMLVideoElement
+                            target.style.display = 'none'
+                            const errorMsg = target.nextElementSibling as HTMLElement
+                            if (errorMsg) {
+                              errorMsg.style.display = 'block'
+                            }
                           }
                         }}
                       />
@@ -298,10 +345,25 @@ export function MatchDetailPage() {
                     </ResultVideoContainer>
                     <ResultActions>
                       <DownloadButton
-                        href={match.result_video_url}
+                        href={presignedUrls.video || match.result_video_url}
                         download={`${match.name}_result.mp4`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={async (e) => {
+                          // Presigned URL이 없으면 가져오기
+                          if (!presignedUrls.video && matchId) {
+                            e.preventDefault()
+                            try {
+                              const videoResult = await getPresignedUrl(matchId, 'video')
+                              setPresignedUrls(prev => ({ ...prev, video: videoResult.presigned_url }))
+                              // 새 창에서 다운로드
+                              window.open(videoResult.presigned_url, '_blank')
+                            } catch (error) {
+                              console.error('Presigned URL 가져오기 실패:', error)
+                              window.alert('다운로드에 실패했습니다. 다시 시도해주세요.')
+                            }
+                          }
+                        }}
                       >
                         Download Video
                       </DownloadButton>
@@ -317,10 +379,25 @@ export function MatchDetailPage() {
                     </ResultDescription>
                     <ResultActions>
                       <DownloadButton
-                        href={match.csv_url}
+                        href={presignedUrls.csv || match.csv_url}
                         download={`${match.name}_tracks.csv`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={async (e) => {
+                          // Presigned URL이 없으면 가져오기
+                          if (!presignedUrls.csv && matchId) {
+                            e.preventDefault()
+                            try {
+                              const csvResult = await getPresignedUrl(matchId, 'csv')
+                              setPresignedUrls(prev => ({ ...prev, csv: csvResult.presigned_url }))
+                              // 새 창에서 다운로드
+                              window.open(csvResult.presigned_url, '_blank')
+                            } catch (error) {
+                              console.error('Presigned URL 가져오기 실패:', error)
+                              window.alert('다운로드에 실패했습니다. 다시 시도해주세요.')
+                            }
+                          }
+                        }}
                       >
                         Download CSV
                       </DownloadButton>

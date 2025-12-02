@@ -280,4 +280,14 @@ export async function startAnalysis(
   })
 }
 
+// Presigned URL 가져오기 (CSV 또는 Video)
+export async function getPresignedUrl(
+  matchId: string,
+  fileType: 'csv' | 'video'
+): Promise<{ presigned_url: string; file_type: string; expires_in: number }> {
+  return apiRequest(`/api/matches/${matchId}/presigned-url?file_type=${fileType}`, {
+    method: 'GET',
+  })
+}
+
 
