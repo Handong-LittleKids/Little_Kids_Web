@@ -216,6 +216,8 @@ export type Match = {
   updated_at: string
   csv_url?: string
   result_video_url?: string
+  llm_report_url?: string
+  llm_report_summary?: string
   progress?: number
   status_message?: string
 }
@@ -286,6 +288,35 @@ export async function getPresignedUrl(
   fileType: 'csv' | 'video'
 ): Promise<{ presigned_url: string; file_type: string; expires_in: number }> {
   return apiRequest(`/api/matches/${matchId}/presigned-url?file_type=${fileType}`, {
+    method: 'GET',
+  })
+}
+
+// LLM 리포트 생성
+export async function generateLLMReport(
+  matchId: string
+): Promise<{
+  success: boolean
+  report_id: string
+  report_url: string
+  summary: string
+  team_stats: Record<string, number>
+  player_stats: Record<string, number>
+}> {
+  return apiRequest(`/api/matches/${matchId}/generate-llm-report`, {
+    method: 'POST',
+  })
+}
+
+// LLM 리포트 조회
+export async function getLLMReport(
+  matchId: string
+): Promise<{
+  report_url: string
+  summary: string
+  generated_at: string
+}> {
+  return apiRequest(`/api/matches/${matchId}/llm-report`, {
     method: 'GET',
   })
 }

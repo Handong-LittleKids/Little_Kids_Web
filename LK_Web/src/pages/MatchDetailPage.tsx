@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
-import { getMatch, startAnalysis, getPresignedUrl, type Match } from '../utils/api'
+import { getMatch, startAnalysis, getPresignedUrl, generateLLMReport, getLLMReport, type Match } from '../utils/api'
 
 export function MatchDetailPage() {
   const { isAuthenticated, loading } = useAuth()
@@ -14,6 +14,7 @@ export function MatchDetailPage() {
     csv?: string
     video?: string
   }>({})
+  const [generatingReport, setGeneratingReport] = useState(false)
 
   // 인증되지 않은 사용자는 랜딩 페이지로 돌려보내기
   useEffect(() => {
@@ -84,6 +85,27 @@ export function MatchDetailPage() {
     } catch (error: any) {
       console.error('분석 시작 실패:', error)
       window.alert(error?.message || '분석 시작에 실패했습니다.')
+    }
+  }
+
+  const handleGenerateLLMReport = async () => {
+    if (!matchId) return
+    
+    if (!window.confirm('LLM 경기 분석 리포트를 생성하시겠습니까?')) {
+      return
+    }
+
+    try {
+      setGeneratingReport(true)
+      const result = await generateLLMReport(matchId)
+      window.alert('LLM 리포트가 성공적으로 생성되었습니다!')
+      // 매치 데이터 다시 불러오기
+      await loadMatch()
+    } catch (error: any) {
+      console.error('LLM 리포트 생성 실패:', error)
+      window.alert(error?.message || 'LLM 리포트 생성에 실패했습니다.')
+    } finally {
+      setGeneratingReport(false)
     }
   }
 
@@ -419,6 +441,61 @@ export function MatchDetailPage() {
                   {match.progress}% {match.status_message ? `- ${match.status_message}` : ''}
                 </ProgressText>
               </ProgressContainer>
+            </Section>
+          )}
+
+          {match.status === 'completed' && (
+            <Section>
+              <SectionTitle>AI Match Analysis Report</SectionTitle>
+              {match.llm_report_url ? (
+                <ResultsContainer>
+                  <ResultItem>
+                    <ResultLabel>LLM Analysis Report</ResultLabel>
+                    {match.llm_report_summary && (
+                      <ResultDescription>
+                        {match.llm_report_summary.substring(0, 200)}...
+                      </ResultDescription>
+                    )}
+                    <ReportIframeContainer>
+                      <ReportIframe
+                        src={match.llm_report_url}
+                        title="AI Match Analysis Report"
+                        onError={(e) => {
+                          console.error('리포트 로드 실패:', match.llm_report_url)
+                          const target = e.target as HTMLIFrameElement
+                          target.style.display = 'none'
+                          const errorMsg = target.nextElementSibling as HTMLElement
+                          if (errorMsg) {
+                            errorMsg.style.display = 'block'
+                          }
+                        }}
+                      />
+                      <ReportErrorMsg style={{ display: 'none' }}>
+                        리포트를 불러올 수 없습니다. 새로고침하거나 다시 생성해주세요.
+                      </ReportErrorMsg>
+                    </ReportIframeContainer>
+                    <ResultActions>
+                      <DownloadButton
+                        href={match.llm_report_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Download Report
+                      </DownloadButton>
+                    </ResultActions>
+                  </ResultItem>
+                </ResultsContainer>
+              ) : (
+                <ResultActions>
+                  <AnalyzeButton
+                    type="button"
+                    onClick={handleGenerateLLMReport}
+                    disabled={generatingReport}
+                  >
+                    {generatingReport ? 'Generating Report...' : 'Generate AI Analysis Report'}
+                  </AnalyzeButton>
+                </ResultActions>
+              )}
             </Section>
           )}
         </Content>
@@ -906,6 +983,32 @@ const ResultVideo = styled.video`
 `
 
 const VideoErrorMsg = styled.div`
+  padding: 40px;
+  text-align: center;
+  color: #ef4444;
+  background-color: #fef2f2;
+  border-radius: 8px;
+`
+
+const ReportIframeContainer = styled.div`
+  width: 100%;
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+`
+
+const ReportIframe = styled.iframe`
+  width: 100%;
+  min-height: 800px;
+  border: none;
+  display: block;
+`
+
+const ReportErrorMsg = styled.div`
   padding: 40px;
   text-align: center;
   color: #ef4444;
