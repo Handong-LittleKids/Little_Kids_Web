@@ -541,13 +541,19 @@ const PageWrapper = styled.div`
 `
 
 const Sidebar = styled.aside`
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 260px;
+  height: 100vh;
   background: radial-gradient(circle at top left, #111827 55%, #4f46e5);
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
   padding: 20px 18px;
   gap: 16px;
+  overflow-y: auto;
+  z-index: 100;
 
   @media (max-width: 900px) {
     display: none;
@@ -607,6 +613,7 @@ const NavItem = styled.button<{ active?: boolean }>`
 const SidebarFooter = styled.div`
   margin-top: auto;
   margin-bottom: 20px;
+  padding-top: 16px;
 `
 
 const BackToProjectsButton = styled.button`
@@ -636,6 +643,11 @@ const MainArea = styled.main`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  margin-left: 260px;
+
+  @media (max-width: 900px) {
+    margin-left: 0;
+  }
 `
 
 const LoadingContainer = styled.div`
