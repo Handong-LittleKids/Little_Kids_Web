@@ -124,7 +124,18 @@ export function MatchDetailPage() {
     try {
       setLoadingReportHTML(true)
       const html = await getLLMReportHTML(matchId)
-      setReportHTML(html)
+      // HTML에서 <html>, <head>, <body> 태그 제거하고 내용만 추출
+      let cleanHTML = html
+      // <body> 태그와 그 내용 추출
+      const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+      if (bodyMatch) {
+        cleanHTML = bodyMatch[1]
+      } else {
+        // <body> 태그가 없으면 <html> 태그 제거 시도
+        cleanHTML = html.replace(/<html[^>]*>/i, '').replace(/<\/html>/i, '')
+        cleanHTML = cleanHTML.replace(/<head[^>]*>[\s\S]*?<\/head>/i, '')
+      }
+      setReportHTML(cleanHTML)
     } catch (error: any) {
       console.error('리포트 HTML 로드 실패:', error)
       setReportHTML(null)
@@ -1013,12 +1024,19 @@ const ReportHTMLContainer = styled.div`
   width: 100%;
   margin: 20px 0;
   border-radius: 8px;
-  overflow: auto;
+  overflow: hidden;
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 0;
   max-height: 1200px;
+  box-sizing: border-box;
+  position: relative;
+  
+  /* 리포트 HTML 내부 스타일 오버라이드 */
+  & * {
+    box-sizing: border-box;
+  }
   
   /* 리포트 HTML 스타일 조정 */
   h1, h2, h3 {
@@ -1051,9 +1069,37 @@ const ReportHTMLContainer = styled.div`
     margin: 16px 0;
   }
   
+  /* 리포트 내부의 .container 클래스 오버라이드 */
   .container {
-    max-width: 100%;
-    padding: 0;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 30px 20px !important;
+    background: white !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  /* body 태그가 있다면 제거 */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background-color: transparent !important;
+  }
+  
+  /* html 태그가 있다면 제거 */
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* 스크롤 가능한 영역 */
+  & > * {
+    max-height: 1200px;
+    overflow-y: auto;
+    padding: 20px;
   }
 `
 
