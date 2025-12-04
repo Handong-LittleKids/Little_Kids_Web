@@ -8,7 +8,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { CreateMatchPage } from './pages/CreateMatchPage'
 import { MatchDetailPage } from './pages/MatchDetailPage'
 import { useKakaoLogin } from './hooks/useKakaoLogin'
-import logoBlack from './assets/logo_black.png'
+import logoBlack from './assets/logo_black.svg'
 
 function AppContent() {
   const { user, isAuthenticated, logout, displayName, loading } = useAuth()
@@ -183,7 +183,7 @@ const Navbar = styled.nav`
 const LogoGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 30px;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -192,7 +192,7 @@ const LogoGroup = styled.div`
 `
 
 const Logo = styled.img`
-  height: 32px;
+  height: 50px;
   width: auto;
 `
 

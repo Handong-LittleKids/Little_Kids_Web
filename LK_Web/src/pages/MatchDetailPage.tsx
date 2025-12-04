@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
 import { getMatch, startAnalysis, getPresignedUrl, generateLLMReport, getLLMReportHTML, type Match } from '../utils/api'
-import logoWhite from '../assets/logo_white.png'
+import logoWhite from '../assets/logo_white.svg'
 
 export function MatchDetailPage() {
   const { isAuthenticated, loading } = useAuth()
@@ -573,7 +573,7 @@ const Brand = styled.div`
 `
 
 const BrandLogo = styled.img`
-  height: 28px;
+  height: 50px;
   width: auto;
 `
 

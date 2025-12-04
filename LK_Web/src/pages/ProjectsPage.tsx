@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
 import { NicknameModal } from '../components/NicknameModal'
 import { listMatches, deleteMatch, updateMatch, type MatchListItem } from '../utils/api'
-import logoWhite from '../assets/logo_white.png'
+import logoWhite from '../assets/logo_white.svg'
 
 // 매치 썸네일 컴포넌트
 function MatchThumbnailContent({ match }: { match: MatchListItem }) {
@@ -400,7 +400,7 @@ const Brand = styled.div`
 `
 
 const BrandLogo = styled.img`
-  height: 28px;
+  height: 50px;
   width: auto;
 `
 
