@@ -294,32 +294,21 @@ export function CreateMatchPage() {
               <UsageGuideList>
                 <UsageGuideItem>
                   <UsageGuideNumber>1</UsageGuideNumber>
-                  <UsageGuideText>
-                    꼭 2개의 카메라가 필요합니다.
-                    <UsageGuideNote>(2개의 영상이 필요합니다.)</UsageGuideNote>
-                  </UsageGuideText>
+                  <UsageGuideText>1대의 고정된 카메라가 필요합니다.</UsageGuideText>
                 </UsageGuideItem>
                 <UsageGuideItem>
                   <UsageGuideNumber>2</UsageGuideNumber>
-                  <UsageGuideText>서로 마주보는 꼭짓점에서 촬영해야 합니다.</UsageGuideText>
+                  <UsageGuideText>경기장 전체를 담을 수 있어야 합니다. (예시 영상을 봐주세요)</UsageGuideText>
                 </UsageGuideItem>
                 <UsageGuideItem>
                   <UsageGuideNumber>3</UsageGuideNumber>
-                  <UsageGuideText>카메라가 고정되어 있어야 합니다.</UsageGuideText>
-                </UsageGuideItem>
-                <UsageGuideItem>
-                  <UsageGuideNumber>4</UsageGuideNumber>
-                  <UsageGuideText>한 카메라가 반코트는 확실하게 촬영해야 합니다.</UsageGuideText>
-                </UsageGuideItem>
-                <UsageGuideItem>
-                  <UsageGuideNumber>5</UsageGuideNumber>
                   <UsageGuideText>
-                    화질은 높을수록 좋습니다. 낮은 경우 분석이 제대로 이뤄지지 않을 수 있습니다.
-                    <UsageGuideNote>(저희의 경우 4K 24fps로 진행하였습니다.)</UsageGuideNote>
+                    화질이 높을수록 분석에 용이합니다. 낮은 경우에는 분석이 제대로 이뤄지지 않을 수 있습니다.
+                    <UsageGuideNote>(예시 영상의 경우 4K 24fps로 진행하였습니다.)</UsageGuideNote>
                   </UsageGuideText>
                 </UsageGuideItem>
                 <UsageGuideItem>
-                  <UsageGuideNumber>6</UsageGuideNumber>
+                  <UsageGuideNumber>4</UsageGuideNumber>
                   <UsageGuideText>
                     오른쪽에서 영상을 추가한 뒤, 아래에 나오는 이미지에 반코트의 '꼭지점' 4개를 클릭해서 좌표를 저장해야 합니다.
                   </UsageGuideText>

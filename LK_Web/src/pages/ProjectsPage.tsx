@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
 import { NicknameModal } from '../components/NicknameModal'
 import { listMatches, deleteMatch, updateMatch, type MatchListItem } from '../utils/api'
+import logoWhite from '../assets/logo_white.png'
 
 // 매치 썸네일 컴포넌트
 function MatchThumbnailContent({ match }: { match: MatchListItem }) {
@@ -206,8 +207,7 @@ export function ProjectsPage() {
       <Sidebar>
         <SidebarHeader>
           <Brand>
-            {/* <BrandLogo>LK</BrandLogo> */}
-            <BrandText>Little Kids</BrandText>
+            <BrandLogo src={logoWhite} alt="Little Kids" />
           </Brand>
         </SidebarHeader>
 
@@ -399,10 +399,9 @@ const Brand = styled.div`
   gap: 10px;
 `
 
-const BrandText = styled.div`
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+const BrandLogo = styled.img`
+  height: 28px;
+  width: auto;
 `
 
 const SidebarSectionLabel = styled.div`

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAuth } from '../hooks/useAuth'
 import { getMatch, startAnalysis, getPresignedUrl, generateLLMReport, getLLMReportHTML, type Match } from '../utils/api'
+import logoWhite from '../assets/logo_white.png'
 
 export function MatchDetailPage() {
   const { isAuthenticated, loading } = useAuth()
@@ -212,7 +213,7 @@ export function MatchDetailPage() {
       <Sidebar>
         <SidebarHeader>
           <Brand>
-            <BrandText>Little Kids</BrandText>
+            <BrandLogo src={logoWhite} alt="Little Kids" />
           </Brand>
         </SidebarHeader>
 
@@ -571,10 +572,9 @@ const Brand = styled.div`
   gap: 10px;
 `
 
-const BrandText = styled.div`
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+const BrandLogo = styled.img`
+  height: 28px;
+  width: auto;
 `
 
 const SidebarSectionLabel = styled.div`

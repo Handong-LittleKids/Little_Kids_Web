@@ -8,6 +8,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { CreateMatchPage } from './pages/CreateMatchPage'
 import { MatchDetailPage } from './pages/MatchDetailPage'
 import { useKakaoLogin } from './hooks/useKakaoLogin'
+import logoBlack from './assets/logo_black.png'
 
 function AppContent() {
   const { user, isAuthenticated, logout, displayName, loading } = useAuth()
@@ -27,7 +28,7 @@ function AppContent() {
       <Header>
         <Navbar>
           <LogoGroup>
-            <Logo>Little Kids</Logo>
+            <Logo src={logoBlack} alt="Little Kids" />
             <NavLinks>
               {/* <NavLink href="#features">Features</NavLink>
               <NavLink href="#solutions">Solutions</NavLink>
@@ -115,25 +116,17 @@ function AppContent() {
           <UsageList>
             <UsageItem>
               <UsageNumber>1</UsageNumber>
-              <UsageText>꼭 2개의 카메라가 필요합니다.</UsageText>
+              <UsageText>1대의 고정된 카메라가 필요합니다.</UsageText>
             </UsageItem>
             <UsageItem>
               <UsageNumber>2</UsageNumber>
-              <UsageText>서로 마주보는 꼭짓점에서 촬영해야 합니다.</UsageText>
+              <UsageText>경기장 전체를 담을 수 있어야 합니다. (예시 영상을 봐주세요)</UsageText>
             </UsageItem>
             <UsageItem>
               <UsageNumber>3</UsageNumber>
-              <UsageText>카메라가 고정되어 있어야 합니다.</UsageText>
-            </UsageItem>
-            <UsageItem>
-              <UsageNumber>4</UsageNumber>
-              <UsageText>한 카메라가 반코트는 확실하게 촬영해야 합니다.</UsageText>
-            </UsageItem>
-            <UsageItem>
-              <UsageNumber>5</UsageNumber>
               <UsageText>
-                화질은 높을수록 좋습니다. 낮은 경우 분석이 제대로 이뤄지지 않을 수 있습니다. 
-                <UsageNote>(저희의 경우 4K 24fps로 진행하였습니다.)</UsageNote>
+                화질이 높을수록 분석에 용이합니다. 낮은 경우에는 분석이 제대로 이뤄지지 않을 수 있습니다.
+                <UsageNote>(예시 영상의 경우 4K 24fps로 진행하였습니다.)</UsageNote>
               </UsageText>
             </UsageItem>
           </UsageList>
@@ -198,10 +191,9 @@ const LogoGroup = styled.div`
   }
 `
 
-const Logo = styled.div`
-  font-size: 24px;
-  font-weight: 700;
-  color: #7c3aed;
+const Logo = styled.img`
+  height: 32px;
+  width: auto;
 `
 
 const NavLinks = styled.div`
