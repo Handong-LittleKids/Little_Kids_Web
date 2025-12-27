@@ -24,10 +24,14 @@ export function useKakaoLogin() {
 
       let messageProcessed = false
       const messageHandler = async (event: MessageEvent) => {
-        if (
-          !event.origin.startsWith('http://localhost:') &&
-          !event.origin.startsWith('https://localhost:')
-        ) {
+        // 프로덕션 환경에서는 현재 origin과 일치하는지 확인
+        // 개발 환경에서는 localhost 허용
+        const isLocalhost = event.origin.startsWith('http://localhost:') || 
+                           event.origin.startsWith('https://localhost:')
+        const isSameOrigin = event.origin === window.location.origin
+        
+        if (!isLocalhost && !isSameOrigin) {
+          console.log('메시지 origin 불일치:', event.origin, '현재 origin:', window.location.origin)
           return
         }
 
